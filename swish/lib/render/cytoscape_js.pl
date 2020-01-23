@@ -48,10 +48,10 @@
 
 :- use_module(library(debug)).
 
-%/* debug paths
+/* debug paths
 :- findall(X=Y,file_search_path(X,Y),L),sort(L,S),maplist(writeln,S).
-%:- use_module(swish('config-enabled/web/plugin_cytoscape_js')).
-%*/
+:- use_module(swish('config-enabled/web/plugin_cytoscape_js')).
+*/
 :- use_module(config(plugin_cytoscape_js)).
 :- register_renderer(cytoscape_js, "Render graph with CytoscapeJS").
 /*
@@ -80,7 +80,7 @@ term_rendering(Term,_Vars,Options) -->
   select_option(render_pairs(Render_pairs),Options3,_Options3,true),
 
     parse_term(Term,Render_pairs,Elements,Style,Layout),
-/*    Width=Parsed.width,
+/*  Width=Parsed.width,
     Height=Parsed.height,
     BackgroundColor=Parsed.backgroundColor,
     */
@@ -180,7 +180,4 @@ parse_options(Options,
   debug(swish_render_cytoscape_js,
         'options:~w,~w,~w,~w,~w',
         [Options,Width,Height,BackgroundColor,Render_pairs]).
-
-
-
 */
