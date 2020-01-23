@@ -1,28 +1,37 @@
 # swish_cytoscape_js
+
 SWISH graph rendering by means of cytoscape_js
 
 Author: CapelliC
 
-Copyright: @ CapelliC 2020
+Copyright: CapelliC @ 2020
 
-### installation
+### Install
 
-Assuming you have a plain SWISH installation, for instance
+Assuming you have a plain SWISH installation, that is
 
 ```
 ~/swish
 ```
 
-and you have cloned this repo in root, for instance
+and you have cloned this repo in ~/swish_cytoscape_js, for instance
 
 ```
 $ cd
 $ git clone https://github.com/CapelliC/swish_cytoscape_js.git
 ```
 
-then
+then an installation can be accomplished with
 
 ```
-$ cd swish_cytoscape_js
+$ cd ~/swish_cytoscape_js
 $ swipl install.pl
+```
+
+To change the swish directory, edit the variable in install.pl
+
+```
+    % adjust this path to your SWISH installation directory
+    SwishRoot = '~/swish',
+
 ```
