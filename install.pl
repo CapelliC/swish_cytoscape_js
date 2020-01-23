@@ -21,11 +21,11 @@ copy_resources :-
 
     maplist(copy_resource(SwishDir, InstallDir), [
                 'config-enabled/web/plugin/cytoscape_js/cytoscape.min.js',
+                'config-enabled/plugin_cytoscape_js.pl',
                 'lib/render/cytoscape_js.pl',
                 'examples/test_cytoscape.swinb'
             ]),
 
-    %format(atom(SwishPl), '~w/~w', [SwishDir, 'swish.pl']),
     path(SwishDir, 'swish.pl', SwishPl),
     read_file_to_string(SwishPl, S, []),
     path(InstallDir, 'swish/swish_append.pl', Swish_append),
@@ -35,11 +35,11 @@ copy_resources :-
     ;   open(SwishPl, write, SP),
         format(SP, '~s~n~s', [S, T]),
         close(SP)
-    ).
+    ),
+    
+    writeln(done).
 
 copy_resource(SwishDir, InstallDir, Relative) :-
-    %format(atom(SrcPath), '~w/swish/~w', [InstallDir, Relative]),
-    %format(atom(DstPath), '~w/~w', [SwishDir, Relative]),
     path(InstallDir, swish/Relative, SrcPath),
     path(SwishDir, Relative, DstPath),
     file_directory_name(DstPath, DstDir),
