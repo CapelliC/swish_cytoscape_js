@@ -1,0 +1,181 @@
+<div class="notebook">
+
+<div class="nb-cell markdown" name="md1">
+There has been a thread on tabling recently, https://swi-prolog.discourse.group/t/tabling-in-four-color-example/1020/12
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
+% map of European Union
+neighbours(austria, [czech_republic, germany, hungary, italy, slovenia, slovakia]).
+neighbours(belgium, [france, netherlands, luxemburg, germany, united_kingdom]).
+neighbours(bulgaria, [romania, greece]).
+neighbours(croatia, [slovenia, hungary]).
+neighbours(cyprus, [greece]).
+neighbours(czech_republic, [germany, poland, slovakia, austria]).
+neighbours(denmark, [germany, sweden]).
+neighbours(estonia, [finland, latvia, lithuania]).
+neighbours(finland, [estonia, sweden]).
+neighbours(france, [spain, belgium, luxemburg, germany, italy, united_kingdom]).
+neighbours(germany, [netherlands, belgium, luxemburg, denmark, france, austria, poland, czech_republic]).
+neighbours(greece, [bulgaria, cyprus]).
+neighbours(hungary, [austria, slovakia, romania, croatia, slovenia]).
+neighbours(ireland, [united_kingdom]).
+neighbours(italy, [france, austria, slovenia]).
+neighbours(latvia, [estonia, lithuania]).
+neighbours(lithuania, [estonia, latvia, poland]).
+neighbours(luxemburg, [belgium, france, germany]).
+neighbours(malta, []).
+neighbours(netherlands, [belgium, germany, united_kingdom]).
+neighbours(poland, [germany, czech_republic, slovakia, lithuania]).
+neighbours(portugal, [spain]).
+neighbours(romania, [hungary, bulgaria]).
+neighbours(slovakia, [czech_republic, poland, hungary, austria]).
+neighbours(slovenia, [austria, italy, hungary, croatia]).
+neighbours(spain, [france, portugal]).
+neighbours(sweden, [finland, denmark]).
+neighbours(united_kingdom, [ireland, netherlands, belgium, france]).
+
+validate :-
+    forall(neighbours(P,Ns),
+           forall(member(N,Ns),
+                  (neighbours(N,NNs),memberchk(P,NNs)))).
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q2">
+validate.
+</div>
+
+<div class="nb-cell markdown" name="md2">
+Let's try to color the graph, first in basic Prolog, a slight variation on the solution proposed.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p3">
+% adapted from https://github.com/josd/see/blob/487c745d594b0505913c5ef56e37a2b846cbb9e2/four_color/four_color.pl
+
+% four color a list of places
+four_color(Places) :-
+    %findall(Place-_, neighbours(Place, _), Places),
+    setof(Place-_,Ns^neighbours(Place,Ns),Places),
+    %reverse(RPlaces, Places),
+    places_colored(Places).
+
+place_color(red).
+place_color(green).
+place_color(blue).
+place_color(yellow).
+
+places_colored([]).
+places_colored([Place-Color|Tail]) :-
+    places_colored(Tail),
+    neighbours(Place, Neighbours),
+    place_color(Color),
+    \+ (member(Neighbour-Color, Tail), memberchk(Neighbour, Neighbours)).
+</div>
+
+<div class="nb-cell markdown" name="md3">
+Now we render the solution as a colored graph, to illustrate configuration of basic nodes attributes.
+We can do it specifying a style on each node (by node:id), or declaring *classes*, and binding related nodes. The following snippet creates classes named as colors and assign each node a color class.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p4">
+:- use_module(library(ugraphs)).
+:- use_rendering(cytoscape_js, [backgroundColor('#abc'),height('600px'),width('600px')]).
+
+% make an undirected graph, keep outgoing edges to places with higher (in lex order) names
+neighbours_as_graph(G) :-
+    setof(P-Ns, Ps^(neighbours(P,Ps),include(@&lt;(P),Ps,Ns)), G).
+
+color_style(Color,Style) :-
+    atom_concat(.,Color,Selector),
+    Style={
+          selector:Selector,
+          style:{backgroundColor:Color}
+    }.
+
+colored_graph(_{
+		elements:Elements
+        ,style:Style
+        ,layout:{
+                name:breadthfirst,
+                  circle:true
+                }
+    }) :-
+    neighbours_as_graph(NodesEdges),
+    time(four_color(NodesColors)),
+    normal_ugraph_to_cyto(NodesEdges,NodesColors,Elements),
+   	findall(S,(place_color(C),color_style(C,S)),ColorsStyled),
+    style_default([NodeStyle|_]),
+    Style=[NodeStyle|ColorsStyled].
+    /*
+    style_default(Style_default),
+   	findall(S,(place_color(C),color_style(C,S)),ColorsStyled),
+    append(Style_default,ColorsStyled,Style).
+    */
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q4">
+colored_graph(G).
+</div>
+
+<div class="nb-cell program" name="p2">
+:- table four_color_t/2, neighbour_color/2.
+
+four_color_t(PVs) :-
+    setof(P-_,Ns^neighbours(P,Ns),PVs),
+    pairs_keys_values(PVs,Ps,Vs),
+    maplist(four_color_t,Ps,Vs).
+
+four_color_t(Place,Color) :-
+    place_color(Color),
+    tnot(neighbour_color(Place,Color)).
+
+neighbour_color(Place,Color) :-
+    neighbours(Place,Neighbours),
+    member(Neighbour,Neighbours),
+    four_color_t(Neighbour,Color).
+
+/*
+:- table four_color_t/2, neighbour_colour/2.
+
+four_color_t(Colors) :-
+    setof(P,Ns^neighbours(P,Ns),Ps),
+    maplist(four_color_t,Ps,Colors).
+
+four_color_t(Place, Place-Color) :-
+    place_color(Color),
+    tnot(neighbour_colour(Place, Color)).
+
+neighbour_colour(Place, Color) :-
+    neighbours(Place, Neighbours),
+    member(Neighbour, Neighbours),
+    four_color_t(Neighbour, Color).
+*/
+
+/*
+four_color_t(Colors) :-
+    setof(P,Ns^neighbours(P,Ns),Ps),
+    maplist(four_color_t,Ps,Colors).
+    %findall(Place-Color,(neighbours(Place,_),four_color_t(Place,Color)),Places).
+
+:- table four_color_t/2. %(+,first),four_color_ts(_,_).
+
+four_color_t(Place,Color) :-
+    place_color(Color),
+    neighbours(Place,Neighbours),
+    maplist([N]&gt;&gt;four_color_t(N,Color),Neighbours).
+    %four_color_ts(Neighbours,Color).
+*/
+/*
+four_color_ts([],_).
+four_color_ts([P|Ps],C) :-
+    place_color(D),D\=C,
+    tnot(four_color_t(P,D)),
+    four_color_ts(Ps,C).
+*/
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q1">
+abolish_all_tables,time(four_color_t(Cs)).
+</div>
+
+</div>

@@ -1,0 +1,123 @@
+<div class="notebook">
+
+<div class="nb-cell markdown" name="md1">
+[CytoscapeJS](http://js.cytoscape.org/) is a graph theory (network) library for visualisation and analysis.
+
+As a SWISH component, it takes the specification for a graph in either
+  - one or more lists of ordered pairs, as required by library([ugraphs](https://www.swi-prolog.org/pldoc/man?section=ugraphs)), eventually organized in an anonymous dict
+  - a small *subset* of the _dot_ language notation
+</div>
+
+<div class="nb-cell program" name="p1">
+:- use_module(library(ugraphs)).
+:- use_rendering(cytoscape_js).
+</div>
+
+<div class="nb-cell markdown" name="md2">
+Now let see how examples of constructive usage from library(ugraphs) documentation get represented.
+Testing vertices_edges_to_ugraph/3:
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q1">
+vertices_edges_to_ugraph([],
+                         [1-3,2-4,4-5,1-5],
+                         G).
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q2">
+vertices_edges_to_ugraph([6,7,8],
+                         [1-3,2-4,4-5,1-5],
+                         G).
+</div>
+
+<div class="nb-cell markdown" name="md3">
+Testing add_vertices/3, the next query highlights a problem that could surface working with library(ugraph): node 3, linked from node 1, doesn't appear as key in =NG=, so we should handle incomplete data. By now, just expose the exception raised from CytoscapeJS.
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q3">
+add_vertices([1-[3,5],2-[]],
+             [0,1,2,9],
+             NG).
+</div>
+
+<div class="nb-cell markdown" name="md4">
+Now a query that needs first two arguments swapped to work, testing del_vertices/3:
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q4">
+del_vertices([1-[3,5],2-[4],3-[],4-[5],5-[],6-[],7-[2,6],8-[]],
+             [2,1],
+             NL).
+</div>
+
+<div class="nb-cell markdown" name="md5">
+Testing add_edges/3, on a graph with lot of unconnected vertices:
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q5">
+add_edges([1-[3,5],2-[4],3-[],4-[5],5-[],6-[],7-[],8-[]],
+          [1-6,2-3,3-2,5-7,3-2,4-5],
+          NL).
+</div>
+
+<div class="nb-cell markdown" name="md6">
+All queries above render a pairs list, now to test custom style we need to pass a structured term (a dict) having the pairs list either as a graph or edges:
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q6">
+X=_{  graph:[1-[1,2],2-[]],
+      style:[
+        {selector:node,
+         style:{
+            'background-color':red,
+            'label':'data(id)'
+         }
+        },
+        {selector:edge,
+         style:{
+             'line-color':green
+         }
+        }
+      ],
+   	  layout:{name:'grid'
+             }
+    }.
+</div>
+
+<div class="nb-cell markdown" name="md7">
+Style property identifiers are atoms, can be espressed in camelCase, thus reducing the syntax noise. Note also the use of implicit graph definition, by specification of edges instead of graph:
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q7">
+X=_{  edges:[1-1,1-2], % instead of graph:[1-[1,2],2-[]],
+      style:[
+        {selector:node,
+         style:{
+            backgroundColor:red,
+            label:'data(id)'
+         }
+        },
+        {selector:edge,
+         style:{
+             lineColor:green
+         }
+        }
+      ],
+   	  layout:{name:grid
+             }
+    }.
+</div>
+
+<div class="nb-cell markdown" name="md8">
+If you need your lists of pairs *not* rendered as a graph, change the default:
+</div>
+
+<div class="nb-cell program" data-background="true" name="p2">
+:- use_rendering(cytoscape_js, [render_pairs(false)]).
+</div>
+
+<div class="nb-cell query" name="q8">
+X=[1-3,2-4,4-5,1-5].
+</div>
+
+</div>

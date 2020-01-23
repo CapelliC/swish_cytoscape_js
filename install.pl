@@ -23,7 +23,9 @@ copy_resources :-
                 'config-enabled/web/plugin/cytoscape_js/cytoscape.min.js',
                 'config-enabled/plugin_cytoscape_js.pl',
                 'lib/render/cytoscape_js.pl',
-                'examples/test_cytoscape.swinb'
+                'examples/test_cytoscape.swinb',
+                'examples/CytoscapeJS renderer.swinb',
+                'examples/map coloring with CytoscapeJS.swinb',
             ]),
 
     path(SwishDir, 'swish.pl', SwishPl),
