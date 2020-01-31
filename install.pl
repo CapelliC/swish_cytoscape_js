@@ -39,25 +39,24 @@ copy_resources :-
         close(SP)
     ),
 
-    path(SwishDir, 'examples/prolog_tutorials.swinb', ExProTutPath),
-    
-    open(ExProTutPath, append, S_ExProTutPath),
-    format(S_ExProTutPath, '~n~s~n', [`
+    path(SwishDir, 'examples/swish_tutorials.swinb', ExTutPath),
+
+    open(ExTutPath, append, S_ExTutPath),
+    format(S_ExTutPath, '~n~s~n', [`
 <div class="notebook">
 <div class="nb-cell markdown">
 ---
-## CytoscapeJS renderer
-
-These notebooks show the basics of CytoscapeJS
+These notebooks show the basics of CytoscapeJS renderer
 
   - [Test installation](example/test_cytoscape.swinb)
   - [Options and style](example/CytoscapeJS_renderer.swinb)
   - [Map coloring](example/map_coloring_with_CytoscapeJS.swinb)
-  
+
 </div>
 </div>
 `]),
-
+    close(S_ExTutPath),
+    
     writeln('install done.').
 
 copy_resource(SwishDir, InstallDir, Relative) :-
