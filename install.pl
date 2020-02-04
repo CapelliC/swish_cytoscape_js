@@ -25,7 +25,8 @@ copy_resources :-
                 'lib/render/cytoscape_js.pl',
                 'examples/test_cytoscape.swinb',
                 'examples/CytoscapeJS_renderer.swinb',
-                'examples/map_coloring_with_CytoscapeJS.swinb'
+                'examples/map_coloring_with_CytoscapeJS.swinb',
+                'examples/argue_CytoscapeJS.swinb'
             ]),
 
     path(SwishDir, 'swish.pl', SwishPl),
@@ -51,6 +52,7 @@ These notebooks show the basics of CytoscapeJS renderer
   - [Test installation](example/test_cytoscape.swinb)
   - [Options and style](example/CytoscapeJS_renderer.swinb)
   - [Map coloring](example/map_coloring_with_CytoscapeJS.swinb)
+  - [Argumentation graphs](example/argumentation_framework_CyJs.swinb)
 
 </div>
 </div>
