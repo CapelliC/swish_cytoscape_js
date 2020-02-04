@@ -1,0 +1,334 @@
+<div class="notebook">
+
+<div class="nb-cell markdown" name="md3">
+A port of https://swish.swi-prolog.org/p/argue.swinb, from https://swi-prolog.discourse.group/t/swish-notebook-to-implement-labeling-an-argumentation-graph-using-tabled-prolog/1800
+
+# Formal Argumentation Theory
+
+This notebook is based on the [slides](https://users.cs.cf.ac.uk/CaminadaM/publications/IJCAI19_presentation.pdf) of a presentation helt at IJCAI 2019 by Martin Caminada from Cardiff University.
+
+The notebook includes the program argue.pl (inlined at bottom) which provides a labeling implemention for argumentation graphs based on Prolog tabling.  Interesting in this implementation is that it simply uses the declarative rules from the slide __Argument Labelling__:
+
+  - Each argument is labelled __in__, __out__ or __undec__
+  - an argument is __in__ ⟺
+    - __all its__ attackers are __out__
+  - an argument is __out__ ⟺
+    - it __has an__ attacker that is __in__
+  - an argument is __undec__ ⟺
+    - __not all__ its attackers are __out__
+    - __and__ it does __not__ have an attacker that is __in__
+</div>
+
+<div class="nb-cell query" name="q1">
+projection([G]), % run predefined
+I=graph03,model(I,M),model_graph(I,M,G).
+</div>
+
+<div class="nb-cell html" name="htm1">
+<p>Please select a graph and click the <i>Run query</i> button on the right
+side of the query below</p>
+
+<div class="panel panel-default">
+  <div class="panel-body">
+    <div class="form-group">
+      <label>#example Graph</label>
+      <div class="input-group">
+        <div class="input-group-btn">
+          <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Example
+            <span class="caret"></span></button>
+          <ul class="dropdown-menu">
+          </ul>
+        </div>
+        <input class="form-control" id="example">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Load examples from the predicate graph/1.  notebook.swish() is a wrapper
+  // around new Pengine() that fetches the sources using the same algorithm as
+  // a query cell and set the `application` to `swish`.
+  // notebook.$() is a shorthand for notebook.cell().find(), evaluating to a
+  // jQuery object that matches the objects from the current cell.
+  function loadExamples() {
+    var seen = 0
+    notebook.$(".dropdown-menu").html("")
+    notebook.swish({ ask: "graph(Ex, _), atomic(Ex)",
+                     ondata: function(data) {
+                     	notebook.$(".dropdown-menu").append('<li>'+data.Ex+'</li>')
+                     	if ( seen++ == 0 )
+                       		notebook.$("#example").val(data.Ex)
+                     }
+                   })
+  }
+  // Load the examples on page load as well as if the user clicks the
+  // dropdown menu, so changes are reflected.
+  loadExamples()
+  notebook.$(".dropdown-toggle").on("click", loadExamples)
+
+  // Pass selected examples to the input field.
+  notebook.$(".dropdown-menu").on("click", "li", function(ev) {
+    notebook.$("#example").val($(this).text())
+  })
+
+  // If the play button of the "parse" query is clicked, run the query,
+  // binding Sentence to the input string.  The function
+  // notebook.bindQuery() takes the name of a query and a
+  // function that collects the arguments and calls the query.
+  
+  /* still learning how to use this stuff, so...
+  notebook.bindQuery("label", function(q) {
+    q.run({GraphS: notebook.$("input").val()});
+  });
+  */
+</script>
+</div>
+
+<div class="nb-cell query" name="q3">
+projection([G]), jquery('#example', val(), I), model(I,M), model_graph(I,M,G).
+</div>
+
+<div class="nb-cell html" name="htm2">
+
+</div>
+
+<div class="nb-cell markdown" name="md4">
+## Graph rendering
+
+The code below defines model_graph/3, combining the model and graph edges to render an argumentation graph using Cytoscape_JS.
+</div>
+
+<div class="nb-cell program" data-background="true" name="p4">
+:- use_rendering(cytoscape_js, [
+	backgroundColor('#abc'),
+	height('800px'),
+	width('800px')
+]).
+
+model_graph(GraphID, Model, _{
+		elements:Elements,
+        style:Style,
+        layout:{
+          name:cose
+          /* or
+          name:breadthfirst,
+          circle:true
+          */
+        }
+    }) :-
+
+    style_default(StyleDefault),
+    %maplist(classColor_style, [in:green, out:red, undec:grey], Classes),
+    maplist([Class:Color, {
+		selector:Selector,
+        style:{backgroundColor:Color}
+    }]&gt;&gt;atom_concat(., Class, Selector), [in:green, out:red, undec:grey], CCS),
+    append(StyleDefault, CCS, Style),
+    
+    graph(GraphID, Edges),
+    maplist(mnode, Model, Nodes),
+    %maplist([X-&gt;Y,E]&gt;&gt;(E={data:{source:X,target:Y}}),Edges,EdgesPairs),
+    maplist([X-&gt;Y, {data:{source:X,target:Y}}]&gt;&gt;true, Edges, EdgesPairs),
+    append(Nodes, EdgesPairs, Elements).
+/*
+classColor_style(Class:Color, Style) :-
+    atom_concat(., Class, Selector),
+    Style={
+          selector:Selector,
+          style:{backgroundColor:Color}
+    }.
+*/
+mnode(NodeID=in,    {data:{id:NodeID},classes:in}).
+mnode(NodeID=out,   {data:{id:NodeID},classes:out}).
+mnode(NodeID=undec, {data:{id:NodeID},classes:undec}).
+</div>
+
+<div class="nb-cell markdown" name="md1">
+## Example graphs
+
+Graphs from http://disco.cs.cf.ac.uk/examples/
+</div>
+
+<div class="nb-cell program" data-background="true" name="p3">
+graph(graph01,[ a-&gt;b,a-&gt;f,b-&gt;c,b-&gt;e,b-&gt;f,
+                c-&gt;d,d-&gt;e,d-&gt;g,g-&gt;h,h-&gt;g
+              ]).
+graph(graph02,[ a-&gt;b,b-&gt;c,c-&gt;e,d-&gt;e,e-&gt;f,
+                f-&gt;e,g-&gt;h,h-&gt;b,h-&gt;g
+              ]).
+graph(graph03,[ d-&gt;b5,d-&gt;c5,b5-&gt;b4,b5-&gt;c4,
+                c5-&gt;c4,c5-&gt;b4,b4-&gt;b3,c4-&gt;c3,
+                b3-&gt;b2,b3-&gt;c3,b3-&gt;c2,c3-&gt;c2,
+                c3-&gt;b3,c3-&gt;b2,b2-&gt;b1,c2-&gt;c1,
+                b1-&gt;a,b1-&gt;c1,c1-&gt;a,c1-&gt;b1
+              ]).
+graph(graph04,[a-&gt;b,b-&gt;c,c-&gt;d]).
+graph(graph05,[a-&gt;d,d-&gt;c,c-&gt;b,b-&gt;a]).
+graph(graph06,[a-&gt;b,b-&gt;c,c-&gt;d,d-&gt;e,e-&gt;b]).
+graph(graph07,[a-&gt;b,b-&gt;a,b-&gt;c,c-&gt;d,d-&gt;e,e-&gt;c]).
+graph(graph08,[a-&gt;b,a-&gt;c,b-&gt;a,b-&gt;c]).
+graph(graph09,[ b-&gt;a,c-&gt;a,d-&gt;b,d-&gt;f,e-&gt;b,
+                f-&gt;c,f-&gt;d
+              ]).
+</div>
+
+<div class="nb-cell markdown" name="md2">
+Graphs from [slides](https://users.cs.cf.ac.uk/CaminadaM/publications/IJCAI19_presentation.pdf)
+</div>
+
+<div class="nb-cell program" data-background="true" name="p2">
+graph(1, [ b -&gt; c, c -&gt; b, d -&gt; c, d -&gt; b, c -&gt; a,
+           b -&gt; a
+         ]).
+graph(2, [ a -&gt; b, b -&gt; a, b -&gt; c, c -&gt; d, d -&gt; e, e -&gt; c
+         ]).
+</div>
+
+<div class="nb-cell program" data-background="true" name="p6">
+% cast string from GUI to atom
+graph(S,G) :- string(S), atom_string(ID,S), graph(ID,G).
+</div>
+
+<div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
+% :- include(argue).
+</div>
+
+<div class="nb-cell markdown" name="md5">
+Inlined http://server/swish/p/argue.pl
+</div>
+
+<div class="nb-cell program" data-background="true" name="p5">
+% This program belongs to the notebook argue.swinb.  It implements labeling of
+% an argumentation graph following the rules of
+% https://users.cs.cf.ac.uk/CaminadaM/publications/IJCAI19_presentation.pdf
+
+%!  edges_model(+Edges, -Model)
+%
+%   Toplevel predicate to use the reasoner through the SWISH API.  Using the
+%   shell script `swish-ask.pl`, solving a model is as easy as
+%
+%   ```
+%   $ ./swish-ask.sh argue.pl Model 'edges_model([a-&gt;b,b-&gt;a],Model)'
+%   Model
+%   "[b=out,a=in]"
+%   "[b=in,a=out]"
+%   "[b=undec,a=undec]"
+%   ```
+
+:- dynamic graph/2.
+edges_model(Edges, Model) :-
+    gensym(g, Graph),
+    asserta(graph(Graph, Edges)),
+    model(Graph, Model).
+
+:- table ( node/2, nodes/2, attacks/3,
+           state/4, model/2, label/3
+         ).
+
+%!  model(+GraphID, -Model) is nondet.
+%   
+%   True when Model is a valid model (a list of NodeID=State) for the graph
+%   with id GraphID.  The graph itself is represented as a fact of the format
+%  
+%       graph(GraphID, ListOfEdges)
+%
+%   where each Edge is a term `Node1 -&gt; Node2`.  The notebook argue.swinb
+%   provides examples from the slides and _disco_ reasoner.
+
+model(Graph, Nodes) :-
+    nodes(Graph, Nodes),
+    label(Nodes, Graph, Nodes).
+
+label([], _, _).
+label(Unassigned, Graph, Nodes) :-
+    select(N=_, Unassigned, Unassigned1),
+    state(Graph, N, _, Nodes),
+    include(unassigned, Unassigned1, Unassigned2),
+    label(Unassigned2, Graph, Nodes).
+
+unassigned(_=State) :-
+    var(State).
+
+%!  state(+GraphID, +NodeID, ?State, ?Model)
+%
+%   This is the central predicate of our reasoner.  If NodeID has no assigned
+%   state it tries to assign a state and propagate the consequences through
+%   the graph.  If NodeID has State on entry we simply succeed.  Note that
+%   we should __not__ call the rules in this case as this will eventually
+%   cause the rules of other nodes to call this one again, leading to a 
+%   loop similar to `p &lt;- q, q &lt;- r, r &lt;-p`.  Using tabled Prolog this
+%   does not loop but, logically correctly, fails.
+
+state(Graph, X, Value, Nodes) :-
+    member(X=Value0, Nodes),
+    value(Value),
+    (   Value == Value0
+    ;   Value0 = Value,
+        rule(Value, Graph, X, Nodes)
+    ).
+
+value(in).
+value(out).
+value(undec).
+
+%!  rule(+State, +GraphID, +NodeID, ?Nodes)
+%
+%   Verify that we can set the state of NodeID to State.  This implemets the
+%   rules described in the slide __Argument Labellings__.  It should be totally
+%   obvious that this is equivalent to the slide.  Note that the execution is
+%   rather complex.  not_exists/1 implements sound negation for non-ground goals
+%   which we need because Nodes may not be ground.  The rules are also recursive
+%   through the negations.  This requires tabling with well founded semantics
+%   as developed by the XSB team and brought to SWI-Prolog with the help of
+%   Teri Swift and David S. Warren, supported by Benjamin Grosof and Kyndi.
+
+rule(in, Graph, X, Nodes) :-
+    all_attackers_out(Graph, X, Nodes).
+rule(out, Graph, X, Nodes) :-
+    attacks(Graph, Y, X),
+    state(Graph, Y, in, Nodes).
+rule(undec, Graph, X, Nodes) :-
+    not_exists(all_attackers_out(Graph, X, Nodes)),
+    not_exists(an_attacker_in(Graph, X, Nodes)).
+
+all_attackers_out(Graph, X, Nodes) :-
+    all_attackers(Graph, X, Ys),
+    all_out(Ys, Graph, Nodes).
+
+all_attackers(Graph, X, Ys) :-
+    findall(Y, attacks(Graph, Y, X), Ys).
+
+all_out([], _, _).
+all_out([H|T], Graph, Nodes) :-
+    state(Graph, H, out, Nodes),
+    all_out(T, Graph, Nodes).
+
+an_attacker_in(Graph, X, Nodes) :-
+    attacks(Graph, Y, X),
+    state(Graph, Y, in, Nodes).
+
+% The stuff below provides the really basic access to the graph properties
+% we are interested in: the nodes in the graph to create the model and 
+% the _attack_ relation between two nodes.
+
+attacks(Graph, X, Y) :-
+    graph(Graph, Edges),
+    member((X-&gt;Y), Edges).
+
+nodes(Graph, List) :-
+    findall(X=_, node(Graph, X), List).
+
+node(Graph, X) :-
+    graph(Graph, Edges),
+    member((A-&gt;B), Edges),
+    (   X = A
+    ;   X = B
+    ).
+
+/** &lt;examples&gt;
+?- edges_model([a-&gt;b,b-&gt;a],Model).
+*/
+</div>
+
+</div>
