@@ -26,7 +26,7 @@ copy_resources :-
                 'examples/test_cytoscape.swinb',
                 'examples/CytoscapeJS_renderer.swinb',
                 'examples/map_coloring_with_CytoscapeJS.swinb',
-                'examples/argue_CytoscapeJS.swinb'
+                'examples/argumentation_framework_CyJs.swinb'
             ]),
 
     path(SwishDir, 'swish.pl', SwishPl),
