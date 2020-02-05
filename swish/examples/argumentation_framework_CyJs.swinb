@@ -187,7 +187,7 @@ graph(2, [ a -&gt; b, b -&gt; a, b -&gt; c, c -&gt; d, d -&gt; e, e -&gt; c
 
 <div class="nb-cell program" data-background="true" name="p6">
 % cast string from GUI to atom
-graph(S,G) :- string(S), atom_string(ID,S), graph(ID,G).
+graph(S,G) :- string(S), ( number_string(ID,S) ; atom_string(ID,S) ), graph(ID,G).
 </div>
 
 <div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
