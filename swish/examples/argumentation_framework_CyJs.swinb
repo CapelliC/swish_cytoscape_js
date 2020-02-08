@@ -19,7 +19,7 @@ The notebook includes the program argue.pl (inlined at bottom) which provides a 
     - __and__ it does __not__ have an attacker that is __in__
 </div>
 
-<div class="nb-cell query" name="q1">
+<div class="nb-cell query" data-chunk="100" name="q1">
 projection([G]), % run predefined
 I=graph03,model(I,M),model_graph(I,M,G).
 </div>
@@ -85,7 +85,7 @@ side of the query below</p>
 </script>
 </div>
 
-<div class="nb-cell query" name="q3">
+<div class="nb-cell query" data-chunk="100" name="q3">
 projection([G]), jquery('#example', val(), I), model(I,M), model_graph(I,M,G).
 </div>
 
@@ -103,7 +103,8 @@ The code below defines model_graph/3, combining the model and graph edges to ren
 :- use_rendering(cytoscape_js, [
 	backgroundColor('#abc'),
 	height('800px'),
-	width('800px')
+	width('800px'),
+	render_pairs(false)
 ]).
 
 model_graph(GraphID, Model, _{
@@ -127,21 +128,15 @@ model_graph(GraphID, Model, _{
     append(StyleDefault, CCS, Style),
     
     graph(GraphID, Edges),
-    maplist(mnode, Model, Nodes),
-    %maplist([X-&gt;Y,E]&gt;&gt;(E={data:{source:X,target:Y}}),Edges,EdgesPairs),
+    %maplist(mnode, Model, Nodes),
+    maplist([NodeID=Label,{data:{id:NodeID},classes:Label}]&gt;&gt;true, Model, Nodes),
     maplist([X-&gt;Y, {data:{source:X,target:Y}}]&gt;&gt;true, Edges, EdgesPairs),
     append(Nodes, EdgesPairs, Elements).
 /*
-classColor_style(Class:Color, Style) :-
-    atom_concat(., Class, Selector),
-    Style={
-          selector:Selector,
-          style:{backgroundColor:Color}
-    }.
-*/
 mnode(NodeID=in,    {data:{id:NodeID},classes:in}).
 mnode(NodeID=out,   {data:{id:NodeID},classes:out}).
 mnode(NodeID=undec, {data:{id:NodeID},classes:undec}).
+*/
 </div>
 
 <div class="nb-cell markdown" name="md1">
@@ -186,8 +181,11 @@ graph(2, [ a -&gt; b, b -&gt; a, b -&gt; c, c -&gt; d, d -&gt; e, e -&gt; c
 </div>
 
 <div class="nb-cell program" data-background="true" name="p6">
-% cast string from GUI to atom
-graph(S,G) :- string(S), ( number_string(ID,S) ; atom_string(ID,S) ), graph(ID,G).
+% cast string from GUI to either number or atom
+graph(S, G) :-
+    string(S),
+    ( number_string(ID,S) ; atom_string(ID,S) ),
+    graph(ID,G).
 </div>
 
 <div class="nb-cell program" data-background="true" data-singleline="true" name="p1">
@@ -329,6 +327,18 @@ node(Graph, X) :-
 /** &lt;examples&gt;
 ?- edges_model([a-&gt;b,b-&gt;a],Model).
 */
+</div>
+
+<div class="nb-cell program" data-background="true" name="p8">
+check_graphs(L) :- setof(Es,K^Vs^(graph(K,Vs),sort(Vs,Es)),Gs),length(Gs,L).
+</div>
+
+<div class="nb-cell query" data-tabled="true" name="q4">
+findall(K-V,graph(K,V),KVs). //, group_pairs_by_key(KVs,R).
+</div>
+
+<div class="nb-cell query" name="q5">
+graph(K1,Vs),graph(K2,Vs),K1\=K2.
 </div>
 
 </div>
